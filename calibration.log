@@ -30,3 +30,10 @@ Enter your choice (1-4): Running standard calibration with ArgyllCMS...
 2026-01-03 17:19:46,686 - INFO - Color adjustments - Red: 0.0%, Green: 0.0%, Blue: 0.0%
 2026-01-03 17:19:46,785 - WARNING - Spyder5 device not detected. Please connect your device.
 2026-01-03 17:19:46,785 - ERROR - Calibration aborted: Spyder5 not connected
+2026-01-04 05:02:56,226 - WARNING - Spyder5 device not detected.
+2026-01-04 05:02:56,227 - INFO - Falling back to time-based ambient estimation.
+2026-01-04 05:03:59,717 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:03:59,792 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:03:59,793 - INFO - Reading ambient light using /opt/homebrew/bin/spotread...
+2026-01-04 05:04:09,800 - ERROR - Timeout waiting for spotread measurement.
+2026-01-04 05:04:09,802 - INFO - Falling back to time-based ambient estimation.

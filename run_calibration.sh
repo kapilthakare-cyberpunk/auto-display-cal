@@ -105,50 +105,42 @@ while true; do
     select choice in "${options[@]}"; do
         case $REPLY in
             1)
-                echo "Running Auto-Instant-Cal (fast, ambient-aware)..."
+                echo "Running Full Calibration (Interactive)..."
                 if [ $DRY_RUN -eq 1 ]; then
-                    echo "DRY RUN: Would execute: python3 auto_calibrate.py"
+                    echo "DRY RUN: Would execute: python3 calibrate_new.py"
                 else
-                    python3 auto_calibrate.py
+                    python3 calibrate_new.py
                 fi
                 break 2
                 ;;
             2)
-                echo "Running Auto-Instant-Cal (3 variations)..."
+                echo "Running Calibration Variations (Interactive)..."
                 
-                # Variation 1: Standard (Auto Ambient)
+                # Variation 1: Standard
                 echo "--- Variation 1: Standard ---"
                 if [ $DRY_RUN -eq 1 ]; then
-                    echo "DRY RUN: Would execute: python3 auto_calibrate.py --profile-name Variation_Standard"
+                    echo "DRY RUN: Would execute: python3 calibrate_new.py --profile-name Variation_Standard"
                 else
-                    python3 auto_calibrate.py --profile-name Variation_Standard
+                    python3 calibrate_new.py --profile-name Variation_Standard
                 fi
 
                 # Variation 2: Warm (5000K)
                 echo "--- Variation 2: Warm (5000K) ---"
                 if [ $DRY_RUN -eq 1 ]; then
-                    echo "DRY RUN: Would execute: python3 auto_calibrate.py --white-point 5000 --profile-name Variation_Warm"
+                    echo "DRY RUN: Would execute: python3 calibrate_new.py --white-point 5000 --profile-name Variation_Warm"
                 else
-                    python3 auto_calibrate.py --white-point 5000 --profile-name Variation_Warm
-                fi
-
-                # Variation 3: Cool (7500K)
-                echo "--- Variation 3: Cool (7500K) ---"
-                if [ $DRY_RUN -eq 1 ]; then
-                    echo "DRY RUN: Would execute: python3 auto_calibrate.py --white-point 7500 --profile-name Variation_Cool"
-                else
-                    python3 auto_calibrate.py --white-point 7500 --profile-name Variation_Cool
+                    python3 calibrate_new.py --white-point 5000 --profile-name Variation_Warm
                 fi
                 
-                echo "All variations completed."
+                echo "Variations completed."
                 break 2
                 ;;
             3)
                 echo "Applying Best Profile..."
                 if [ $DRY_RUN -eq 1 ]; then
-                    echo "DRY RUN: Would execute: python3 auto_calibrate.py --apply-only"
+                    echo "DRY RUN: Would execute: python3 apply_profile.py"
                 else
-                    python3 auto_calibrate.py --apply-only
+                    python3 apply_profile.py
                 fi
                 break 2
                 ;;
