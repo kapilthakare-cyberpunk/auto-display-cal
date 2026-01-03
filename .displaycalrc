@@ -1,0 +1,22 @@
+# Display calibration configuration file
+# Default values for calibration parameters
+
+# Display settings
+DEFAULT_DISPLAY="-d1"
+
+# White point (in Kelvin)
+DEFAULT_WHITE_POINT="6500"
+
+# Gamma value
+DEFAULT_GAMMA="2.2"
+
+# Quality setting (h=high, m=medium, l=low)
+DEFAULT_QUALITY="m"
+
+# Author name for profiles
+DEFAULT_AUTHOR="AutoCal"
+
+# Default color adjustments (as factors, not percentages)
+DEFAULT_RED_FACTOR="1.0"
+DEFAULT_GREEN_FACTOR="1.0"
+DEFAULT_BLUE_FACTOR="1.0"

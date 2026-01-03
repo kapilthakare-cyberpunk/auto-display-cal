@@ -1,0 +1,83 @@
+#!/bin/bash
+# pz-profile - Primes & Zooms Profile Switcher
+# Usage: ./pz-profile switch <preset_name>
+
+set -e
+
+# Configuration
+PROFILE_DIR="$HOME/Library/ColorSync/Profiles"
+# Map presets to ICC profile names (Ensure these files exist or update names)
+declare -A PRESETS
+PRESETS["editing"]="HighLight_Profile.icc"
+PRESETS["client-review"]="MediumLight_Profile.icc"
+PRESETS["office-ambient"]="MediumLight_Profile.icc"
+PRESETS["dark-room"]="LowLight_Profile.icc"
+
+function show_help {
+    echo "Primes & Zooms Profile Switcher"
+    echo "Usage: $(basename "$0") switch <preset>"
+    echo ""
+    echo "Available presets:"
+    for key in "${!PRESETS[@]}"; do
+        echo "  - $key"
+    done
+    echo ""
+    echo "Example:"
+    echo "  $(basename "$0") switch client-review"
+}
+
+if [ "$1" != "switch" ]; then
+    show_help
+    exit 1
+fi
+
+PRESET_NAME="$2"
+
+if [ -z "$PRESET_NAME" ]; then
+    echo "Error: No preset specified."
+    show_help
+    exit 1
+fi
+
+PROFILE_FILE="${PRESETS[$PRESET_NAME]}"
+
+if [ -z "$PROFILE_FILE" ]; then
+    echo "Error: Unknown preset '$PRESET_NAME'."
+    show_help
+    exit 1
+fi
+
+echo "Switching to preset '$PRESET_NAME' (Profile: $PROFILE_FILE)..."
+
+# Try using dispwin first (part of ArgyllCMS)
+if command -v dispwin &> /dev/null; then
+    # Check local directory first, then system directory
+    if [ -f "$PROFILE_FILE" ]; then
+        PATH_TO_PROFILE="$PROFILE_FILE"
+    elif [ -f "$PROFILE_DIR/$PROFILE_FILE" ]; then
+        PATH_TO_PROFILE="$PROFILE_DIR/$PROFILE_FILE"
+    elif [ -f "/Library/ColorSync/Profiles/$PROFILE_FILE" ]; then
+         PATH_TO_PROFILE="/Library/ColorSync/Profiles/$PROFILE_FILE"
+    else
+        echo "Error: Profile file '$PROFILE_FILE' not found."
+        exit 1
+    fi
+
+    if dispwin -d1 "$PATH_TO_PROFILE"; then
+        echo "Successfully applied profile using dispwin."
+        exit 0
+    else
+        echo "Warning: dispwin failed. Trying fallback..."
+    fi
+else
+    echo "dispwin not found. Using fallback..."
+fi
+
+# Fallback to AppleScript (less reliable for specific files, works best if profile is already known to system)
+# Note: Automating "Select exact profile" in macOS GUI is hard via AppleScript without third-party tools.
+# A better fallback for macOS is `sips` or `ColorSyncScripting` but they are deprecated/limited.
+# Custom CLI tools like `displayplacer` or `screenresolution` might be needed for robust profile switching if dispwin fails.
+
+echo "Please manually verify the profile in System Preferences > Displays > Color."
+echo "Selected Profile: $PROFILE_FILE"
+exit 1

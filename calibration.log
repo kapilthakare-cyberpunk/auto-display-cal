@@ -1,0 +1,32 @@
+Starting display calibration setup and execution...
+Step 1: Installing dependencies (if not already installed)...
+Starting ArgyllCMS and Spyder5 setup for macOS...
+Installing ArgyllCMS...
+Warning: argyll-cms 3.4.1 is already installed and up-to-date.
+To reinstall 3.4.1, run:
+  brew reinstall argyll-cms
+ArgyllCMS installed successfully!
+Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please ensure it is connected.
+Setup complete! You can now run automated calibration.
+
+To run automated calibration, use one of these commands:
+  ./run_calibration.sh          # Simple interactive setup
+  python3 auto_calibrate.py     # Standard calibration
+  python3 auto_calibrate.py --red -5   # With red reduction
+  python3 calibration_gui.py    # Launch the GUI
+
+Step 2: Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please connect your device.
+Connect your Spyder5 device and press Enter to continue...
+Configuration loaded from ~/.displaycalrc
+Step 3: Running calibration...
+1) Standard calibration (no color adjustments)
+2) Calibration with red reduction (-5%)
+3) Calibration with custom adjustments
+4) Launch GUI for manual adjustment
+Enter your choice (1-4): Running standard calibration with ArgyllCMS...
+2026-01-03 17:19:46,686 - INFO - Starting automated display calibration for macOS
+2026-01-03 17:19:46,686 - INFO - Color adjustments - Red: 0.0%, Green: 0.0%, Blue: 0.0%
+2026-01-03 17:19:46,785 - WARNING - Spyder5 device not detected. Please connect your device.
+2026-01-03 17:19:46,785 - ERROR - Calibration aborted: Spyder5 not connected

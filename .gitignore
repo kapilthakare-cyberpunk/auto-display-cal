@@ -1,0 +1,9 @@
+*.log
+*.log.*
+*.cal
+*.icc
+*.icm
+__pycache__/
+*.pyc
+.DS_Store
+tmp/
