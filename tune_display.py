@@ -126,6 +126,48 @@ def main():
             subprocess.run(["dispwin", "-d1", "-c"]) # Clear/Reset
             break
         
+        elif char == 's' or char == 'S':
+            # Save/Export
+            print("\n")
+            name = input("Enter name for exported profile (e.g., 'MyVisualTune'): ").strip()
+            if not name:
+                name = f"VisualTune_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+            # Prepare Export Paths
+            documents_path = os.path.expanduser("~/Documents/Calibration_Reports")
+            if not os.path.exists(documents_path):
+                os.makedirs(documents_path)
+            
+            cal_filename = f"{name}.cal"
+            report_filename = f"Report_{name}.txt"
+            
+            export_cal = os.path.join(documents_path, cal_filename)
+            export_report = os.path.join(documents_path, report_filename)
+            
+            # 1. Save .cal file
+            generate_cal_file(export_cal, state)
+            
+            # 2. Generate Report
+            with open(export_report, 'w') as f:
+                f.write("Display Visual Tuning Report\n")
+                f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("-" * 30 + "\n")
+                f.write(f"Red Tint Adjustment:   {int((state['red']-1.0)*100):+d}%\n")
+                f.write(f"Green Tint Adjustment: {int((state['green']-1.0)*100):+d}%\n")
+                f.write(f"Blue Tint Adjustment:  {int((state['blue']-1.0)*100):+d}%\n")
+                f.write(f"Brightness (Gain):     {int((state['gain']-1.0)*100):+d}%\n")
+                f.write("-" * 30 + "\n")
+                f.write("To apply this tuning in the future, run:\n")
+                f.write(f"dispwin -d1 {export_cal}\n")
+            
+            print(f"\n[SUCCESS] Settings exported!")
+            print(f"  - Calibration File: {export_cal}")
+            print(f"  - Detailed Report:  {export_report}")
+            
+            # Ask if we should keep it applied
+            # We just break, effectively keeping it
+            break
+
         # Logic
         if char == 'r': state['red'] -= STEP_SIZE
         elif char == 'R': state['red'] += STEP_SIZE

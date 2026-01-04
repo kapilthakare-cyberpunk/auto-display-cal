@@ -1,48 +1,64 @@
-# Auto-Cal: macOS Display Calibration Automation
+# Auto-Cal: Professional Display Calibration for macOS, Linux, and Windows
 
-A streamlined, robust wrapper around **ArgyllCMS** for macOS. This ecosystem manages your color calibration lifecycle—from deep monthly calibration to daily automated adjustments and real-time visual fine-tuning—without the bloat of GUI applications.
+A streamlined, professional wrapper around **ArgyllCMS**. Auto-Cal provides studio-quality color calibration with an intuitive interface—no bloated GUI applications required. Works on macOS, Linux, and Windows.
 
 ## 🌟 Features
 
-*   **Automated Daily Application**: Silently detects ambient light (or uses equivalent time-of-day logic) to apply the correct ICC profile (`Low`, `Medium`, or `High` light). Safe for `launchd`/`cron`.
-*   **Manual Calibration Wizard**: A simplified interactive CLI wrapper for `dispcal` to generate studio-quality, timestamped ICC profiles.
-*   **Real-Time Live Tuner**: **Exclusive Feature.** A TUI (Text User Interface) that lets you "paint" your screen tint and brightness in real-time using keyboard shortcuts. Great for visually matching reference displays.
+*   **Standard Calibration**: One-click ambient-aware calibration. Measures room light → selects optimal profile → calibrates → exports ICC + Report.
+*   **Detailed Manual Calibration**: Expert mode with full ArgyllCMS interactive menu (Black Level, White Point, etc.).
+*   **Real-Time Live Tuner**: Visual tint/brightness adjustment with keyboard shortcuts. Export calibrated settings instantly.
+*   **Cross-Platform**: Automatic dependency installation for macOS (Homebrew) and Linux (apt, dnf, pacman).
 
 ---
 
-## � Quick Start
+## 🚀 Quick Start
 
-The easiest way to interact with the suite is the main menu:
-
+### macOS & Linux:
+Launch the Auto-Cal menu:
 ```bash
-./run_calibration.sh
+./launch-auto-cal.sh
 ```
 
-This provides quick access to all tools.
+### Windows:
+Ensure [ArgyllCMS](https://www.argyllcms.com/downloadwin.html) is installed and in your PATH, then run:
+```powershell
+python calibrate_new.py
+```
+
+### Menu Options:
+1.  **Standard Calibration (Auto-Ambient)** → 20-30 mins → ICC + Report
+2.  **Detailed Manual Calibration (Expert Mode)** → 30-45 mins → Full Control  
+3.  **Live Tuner (Visual Adjust + Export)** → Real-time → Quick Tweaks
 
 ---
 
 ## 🛠️ Tools Reference
 
-### 1. Daily Automation (`apply_profile.py`)
-*   **Purpose**: Run this in the background (e.g., every hour or at login).
-*   **Logic**: Checks if Spyder sensor is attached.
-    *   *If Yes*: Reads room lux.
-    *   *If No*: Estimates light based on current hour.
-    *   Applies the matching `LowLight_Profile.icc`, `Medium...`, or `High...`.
+### 1. Standard / Detailed Calibration (`calibrate_new.py`)
+*   **Purpose**: Generate accurate ICC profiles with ambient light optimization.
+*   **Modes**:
+    *   **Standard**: Auto-detects settings based on ambient light sensor.
+    *   **Detailed**: Full ArgyllCMS interactive menu (1-8 options).
+*   **Output**:
+    *   ICC Profile applied to system
+    *   Backup copy → `~/Documents/Calibration_Reports/`
+    *   Detailed report with before/after metrics
 *   **Usage**:
     ```bash
-    python3 apply_profile.py
+    python3 calibrate_new.py
+    # OR for manual control:
+    python3 calibrate_new.py --manual
     ```
 
 ### 2. Live Display Tuner (`tune_display.py`)
-*   **Purpose**: Instant visual adjustment without re-calibrating.
-*   **How it works**: Generates a temporary lookup table (LUT) and typically pushes it to the GPU in <100ms.
+*   **Purpose**: Real-time visual adjustment without full recalibration.
+*   **How it works**: Generates temporary LUT and applies to GPU in <100ms.
 *   **Controls**:
     *   `R` / `r`: Increase/Decrease **Red** Tint
     *   `G` / `g`: Increase/Decrease **Green** Tint
     *   `B` / `b`: Increase/Decrease **Blue** Tint
     *   `W` / `w`: Increase/Decrease **Brightness** (Gain)
+    *   `S` / `s`: **EXPORT** current settings to file & Report
     *   `q`: Quit (Keep changes active)
     *   `x`: Cancel (Revert to original state)
 *   **Usage**:
@@ -50,40 +66,29 @@ This provides quick access to all tools.
     python3 tune_display.py
     ```
 
-### 3. Monthly Calibration (`calibrate_new.py`)
-*   **Purpose**: Generate NEW baseline profiles.
-*   **Requirement**: Spyder5 sensor must be connected and hanging on the screen.
-*   **Usage**:
-    ```bash
-    python3 calibrate_new.py
-    ```
-
 ---
 
-## ⚙️ Installation / Setup
+## ⚙️ Installation
 
-1.  **Dependencies**:
-    Ensure `ArgyllCMS` is installed. The setup script handles this for you (via Homebrew).
+1.  **Install Dependencies**:
     ```bash
     ./setup.sh
     ```
+    This installs ArgyllCMS for your detected OS.
 
-2.  **Scheduling (Optional)**:
-    To make `apply_profile.py` run automatically, add it to your `crontab` or `launchd`.
-    *Example Crontab (every hour)*:
-    ```bash
-    0 * * * * /usr/bin/python3 /Users/yourname/Projects/auto-cal/apply_profile.py >> /tmp/autocal.log 2>&1
-    ```
+2.  **Connect Sensor**: Plug in your Spyder5, i1Display, or other supported colorimeter.
+
+3.  **Launch**: `./launch-auto-cal.sh`
 
 ---
 
-## 📂 File Structure
+## 📂 Output Files
 
-*   `apply_profile.py`: Automation script.
-*   `calibrate_new.py`: Calibration wizard.
-*   `tune_display.py`: Real-time tuner.
-*   `calibration_utils.py`: Shared logic (logging, binary detection).
-*   `run_calibration.sh`: Main menu.
+All calibration outputs are saved to `~/Documents/Calibration_Reports/`:
+*   `ProfileName_YYYYMMDD_HHMMSS.icc` - ICC color profile
+*   `Report_ProfileName_YYYYMMDD_HHMMSS.txt` - Detailed calibration report
+
+---
 
 ## 📄 License
 MIT License.

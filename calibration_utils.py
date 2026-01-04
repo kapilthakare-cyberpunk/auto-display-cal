@@ -39,56 +39,68 @@ logger = setup_logging()
 # --- Path Safety ---
 def find_binary(binary_name):
     """
-    Locate a binary using shutil.which and common paths.
-    Returns absolute path or None if not found.
+    Locate a binary using shutil.which and common paths across platforms.
     """
+    # Check PATH first
     path = shutil.which(binary_name)
     if path:
         return path
     
-    # Check common locations for ArgyllCMS on macOS
+    # Platform specific suffixes
+    suffix = ".exe" if os.name == 'nt' else ""
+    bin_file = f"{binary_name}{suffix}"
+
     common_paths = [
-        f"/usr/local/bin/{binary_name}",
-        f"/opt/homebrew/bin/{binary_name}",
-        f"/usr/bin/{binary_name}",
-        f"/Applications/DisplayCAL/DisplayCAL.app/Contents/MacOS/{binary_name}", # sometimes bundled
-        f"/Library/Frameworks/ArgyllCMS.framework/Resources/bin/{binary_name}"
+        # macOS
+        f"/usr/local/bin/{bin_file}",
+        f"/opt/homebrew/bin/{bin_file}",
+        f"/Applications/DisplayCAL/DisplayCAL.app/Contents/MacOS/{bin_file}",
+        # Linux
+        f"/usr/bin/{bin_file}",
+        f"/usr/local/bin/{bin_file}",
+        # Windows (Example common install paths)
+        f"C:\\Argyll_V3.1.0\\bin\\{bin_file}",
+        f"C:\\Program Files\\ArgyllCMS\\bin\\{bin_file}"
     ]
     
     for p in common_paths:
-        if os.path.exists(p) and os.access(p, os.X_OK):
+        if os.path.exists(p):
             return p
             
     return None
 
 # --- Device & Ambient Light ---
 def check_spyder5_connected(retries=3, delay=2):
-    """Check if Spyder5 device is connected via USB with retries"""
+    """
+    Check for connected colorimeters using ArgyllCMS's own device listing.
+    This is the most cross-platform way to detect the sensor.
+    """
+    dispcal_bin = find_binary("dispcal")
+    if not dispcal_bin:
+        return False
+
     for attempt in range(retries):
         try:
-            # Method 1: system_profiler (detailed but sometimes slow/flaky)
-            result = subprocess.run(['system_profiler', 'SPUSBDataType'],
+            # 'dispcal -?' lists available sensors in its help output
+            result = subprocess.run([dispcal_bin, "-?"], 
                                   capture_output=True, text=True)
-            if 'spyder' in result.stdout.lower() or 'color munki' in result.stdout.lower():
-                logger.info("Spyder5 device detected (via system_profiler)")
+            
+            # Look for common sensor names in the output
+            output = result.stdout + result.stderr
+            sensors = ['spyder', 'color munki', 'i1 display', 'datacolor']
+            
+            if any(s in output.lower() for s in sensors):
+                logger.info("Colorimeter detected via ArgyllCMS")
                 return True
                 
-            # Method 2: ioreg (faster, lower level)
-            result_ioreg = subprocess.run(['ioreg', '-p', 'IOUSB', '-w0'], 
-                                        capture_output=True, text=True)
-            if 'spyder' in result_ioreg.stdout.lower() or 'datacolor' in result_ioreg.stdout.lower():
-                logger.info("Spyder5 device detected (via ioreg)")
-                return True
-                
-            # If neither found...
             if attempt < retries - 1:
                 time.sleep(delay)
         except Exception as e:
-            logger.error(f"Error checking for Spyder5: {e}")
+            logger.error(f"Error checking for sensor: {e}")
             if attempt < retries - 1:
                 time.sleep(delay)
     
-    logger.warning("Spyder5 device not detected.")
+    logger.warning("No colorimeter detected.")
     return False
 
 def get_ambient_lux():
@@ -98,21 +110,16 @@ def get_ambient_lux():
     """
     spotread_bin = find_binary("spotread")
     if not spotread_bin:
-        logger.warning("spotread tool not found. Cannot read ambient light.")
         return None
 
     try:
-        logger.info(f"Reading ambient light using {spotread_bin}...")
-        # -a: Ambient light, -N: No calibration (just read)
-        # spotread usually needs a keypress or interactive mode. 
-        # We try feeding 'q' and capture output.
-        cmd = [spotread_bin, "-a"] 
+        logger.debug(f"Attempting ambient light reading with {spotread_bin}...")
+        # spotread is interactive - we try to make it non-interactive
+        # -a: Ambient light, -N: No calibration
+        cmd = [spotread_bin, "-a", "-N"] 
         
-        # We pipe "q" to quit immediately after reading if possible, or wait for output
-        # Some versions output continuously, so we might need to handle that.
-        # This is a best-effort attempt for automation.
-        
-        result = subprocess.run(cmd, input="q\n", capture_output=True, text=True, timeout=10)
+        # Quick timeout - if it doesn't work in 3 seconds, skip it
+        result = subprocess.run(cmd, input="q\n", capture_output=True, text=True, timeout=3)
         
         # Parse output for Lux
         match = re.search(r"Ambient\s*=\s*([\d\.]+)\s*Lux", result.stdout)
@@ -121,20 +128,13 @@ def get_ambient_lux():
             logger.info(f"Measured Ambient Light: {lux} Lux")
             return lux
         
-        match = re.search(r"Result is.*?([\d\.]+)\s*Lux", result.stdout, re.DOTALL)
-        if match:
-            lux = float(match.group(1))
-            logger.info(f"Measured Ambient Light: {lux} Lux")
-            return lux
-
-        logger.debug(f"Could not parse Lux from spotread output: {result.stdout[:200]}...")
         return None
 
     except subprocess.TimeoutExpired:
-        logger.error("Timeout waiting for spotread measurement.")
+        logger.debug("Ambient light measurement timed out (sensor may require manual input)")
         return None
     except Exception as e:
-        logger.error(f"Error reading ambient light: {e}")
+        logger.debug(f"Could not read ambient light: {e}")
         return None
 
 def get_ambient_light_condition():
@@ -176,10 +176,9 @@ def apply_icc_profile(profile_path):
     if dispwin_bin:
         try:
             logger.info(f"Attempting to apply profile {profile_path} using {dispwin_bin}...")
-            # -d1 for first display. -I to install (if needed) or just apply. 
-            # Usually just passing the filename applies it. 
-            # -L loads the calibration from the profile to the video LUT.
-            cmd = [dispwin_bin, "-d1", "-L", profile_path]
+            # -d1 for first display. -I to install and set as system default.
+            # -L is just for loading calibration, -I is for persistent installation.
+            cmd = [dispwin_bin, "-d1", "-I", profile_path]
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
@@ -192,13 +191,6 @@ def apply_icc_profile(profile_path):
     else:
         logger.warning("dispwin binary not found in PATH or common locations.")
 
-    # Fallback to AppleScript
-    logger.warning("Attempting fallback to AppleScript (System Preferences)...")
-    try:
-        # Note: This is brittle and depends on macOS version/language
-        # It's better to just rely on dispwin or 'color' command line tools if available
-        logger.info("AppleScript fallback skipped (unreliable). Please install ArgyllCMS.")
-        return False
-    except Exception as e:
-        logger.error(f"Error applying profile via fallback: {e}")
-        return False
+    # Fallback
+    logger.warning("Profile application failed. Ensure ArgyllCMS is correctly installed for your OS.")
+    return False

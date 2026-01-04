@@ -37,3 +37,115 @@ Enter your choice (1-4): Running standard calibration with ArgyllCMS...
 2026-01-04 05:03:59,793 - INFO - Reading ambient light using /opt/homebrew/bin/spotread...
 2026-01-04 05:04:09,800 - ERROR - Timeout waiting for spotread measurement.
 2026-01-04 05:04:09,802 - INFO - Falling back to time-based ambient estimation.
+Starting display calibration setup and execution...
+chmod: auto_calibrate.sh: No such file or directory
+chmod: auto_calibrate.py: No such file or directory
+chmod: calibration_gui.py: No such file or directory
+Error occurred at line 44. Check calibration.log for details.
+Starting display calibration setup and execution...
+Step 1: Installing dependencies (if not already installed)...
+Starting ArgyllCMS and Spyder5 setup for macOS...
+Installing ArgyllCMS...
+Warning: argyll-cms 3.4.1 is already installed and up-to-date.
+To reinstall 3.4.1, run:
+  brew reinstall argyll-cms
+ArgyllCMS installed successfully!
+Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please ensure it is connected.
+Setup complete! You can now run automated calibration.
+
+To run automated calibration, use one of these commands:
+  ./run_calibration.sh          # Simple interactive setup
+  python3 auto_calibrate.py     # Standard calibration
+  python3 auto_calibrate.py --red -5   # With red reduction
+  python3 calibration_gui.py    # Launch the GUI
+
+Step 2: Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please connect your device.
+Connect your Spyder5 device and press Enter to continue...
+Configuration loaded from ~/.displaycalrc
+Step 3: Running calibration...
+1) Standard Calibration (Auto-Ambient)	3) Launch Live Tuner
+2) Detailed Manual Calibration
+Enter your choice (1-4): Running Standard Calibration (Ambient-Aware)...
+2026-01-04 05:28:52,381 - INFO - Spyder5 device detected (via ioreg)
+Spyder5 device detected (via ioreg)
+2026-01-04 05:28:52,525 - INFO - Spyder5 device detected (via ioreg)
+Spyder5 device detected (via ioreg)
+2026-01-04 05:28:52,526 - INFO - Reading ambient light using /opt/homebrew/bin/spotread...
+Reading ambient light using /opt/homebrew/bin/spotread...
+2026-01-04 05:29:02,536 - ERROR - Timeout waiting for spotread measurement.
+2026-01-04 05:29:02,537 - INFO - Falling back to time-based ambient estimation.
+Timeout waiting for spotread measurement.
+Falling back to time-based ambient estimation.
+Starting calibration: LowLight_Profile_20260104_052902
+
+^CCalibration failed or aborted.
+--- Standard Calibration Process ---
+Measuring ambient light to determine optimal settings...
+Detected Condition: LOW
+
+IMPORTANT: Interactive calibration starting.
+Follow the on-screen prompts to place your sensor and adjust your monitor.
+
+Executing: /opt/homebrew/bin/dispcal -d1 -t 5500 -g 2.2 -yl -q m LowLight_Profile_20260104_052902
+Error occurred at line 105. Check calibration.log for details.
+Starting display calibration setup and execution...
+Step 1: Installing dependencies (if not already installed)...
+Starting ArgyllCMS and Spyder5 setup for macOS...
+Installing ArgyllCMS...
+Warning: argyll-cms 3.4.1 is already installed and up-to-date.
+To reinstall 3.4.1, run:
+  brew reinstall argyll-cms
+ArgyllCMS installed successfully!
+Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please ensure it is connected.
+Setup complete! You can now run automated calibration.
+
+To run automated calibration, use one of these commands:
+  ./run_calibration.sh          # Simple interactive setup
+  python3 auto_calibrate.py     # Standard calibration
+  python3 auto_calibrate.py --red -5   # With red reduction
+  python3 calibration_gui.py    # Launch the GUI
+
+Step 2: Checking for Spyder5 device...
+⚠ Warning: Spyder5 device not detected. Please connect your device.
+Connect your Spyder5 device and press Enter to continue...
+Configuration loaded from ~/.displaycalrc
+Step 3: Running calibration...
+1) Standard Calibration (Auto-Ambient)	3) Launch Live Tuner
+2) Detailed Manual Calibration
+Enter your choice (1-4): Running Standard Calibration (Ambient-Aware)...
+2026-01-04 05:29:54,187 - INFO - Spyder5 device detected (via ioreg)
+Spyder5 device detected (via ioreg)
+2026-01-04 05:29:54,264 - INFO - Spyder5 device detected (via ioreg)
+Spyder5 device detected (via ioreg)
+2026-01-04 05:29:54,265 - INFO - Reading ambient light using /opt/homebrew/bin/spotread...
+Reading ambient light using /opt/homebrew/bin/spotread...
+2026-01-04 05:30:04,272 - ERROR - Timeout waiting for spotread measurement.
+Timeout waiting for spotread measurement.
+2026-01-04 05:30:04,273 - INFO - Falling back to time-based ambient estimation.
+Falling back to time-based ambient estimation.
+Starting calibration: LowLight_Profile_20260104_053004
+^CCalibration failed or aborted.
+--- Standard Calibration Process ---
+Measuring ambient light to determine optimal settings...
+Detected Condition: LOW
+
+IMPORTANT: Interactive calibration starting.
+Follow the on-screen prompts to place your sensor and adjust your monitor.
+
+Executing: /opt/homebrew/bin/dispcal -d1 -t 5500 -g 2.2 -yl -q m LowLight_Profile_20260104_053004
+Error occurred at line 105. Check calibration.log for details.
+2026-01-04 05:37:52,946 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:37:53,021 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:37:56,034 - INFO - Falling back to time-based ambient estimation.
+2026-01-04 05:38:25,479 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:38:25,556 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:38:28,564 - INFO - Falling back to time-based ambient estimation.
+2026-01-04 05:43:33,820 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:43:33,908 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:43:36,917 - INFO - Falling back to time-based ambient estimation.
+2026-01-04 05:44:24,419 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:44:24,581 - INFO - Spyder5 device detected (via ioreg)
+2026-01-04 05:44:27,586 - INFO - Falling back to time-based ambient estimation.

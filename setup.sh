@@ -1,57 +1,50 @@
 #!/bin/bash
 
-# macOS ArgyllCMS and Spyder5 Setup Script
-# This script installs ArgyllCMS for Spyder5 calibration
+# setup.sh - Install dependencies for Auto-Cal
+# This script installs ArgyllCMS across different platforms (macOS/Linux)
 
-# Function to rotate log file if it exceeds 10MB
-rotate_log_if_needed() {
-    local log_file="calibration.log"
-    if [[ -f "$log_file" ]]; then
-        local log_size
-        log_size=$(stat -f%z "$log_file" 2>/dev/null || stat -c%s "$log_file" 2>/dev/null || echo 0)
-        if (( log_size > 10485760 )); then  # 10MB in bytes
-            echo "Rotating log file (size: $log_size bytes)..."
-            mv "$log_file" "${log_file}.old" 2>/dev/null || true
+OS_TYPE="$(uname -s)"
+echo "Detected OS: $OS_TYPE"
+
+case "${OS_TYPE}" in
+    Darwin*)
+        echo "Installing for macOS..."
+        if ! command -v brew &> /dev/null; then
+            echo "Error: Homebrew not found. Install it from https://brew.sh/"
+            exit 1
         fi
-    fi
-}
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install argyll-cms
+        ;;
+    Linux*)
+        echo "Installing for Linux..."
+        if command -v apt-get &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y argyll
+        elif command -v dnf &> /dev/null; then
+            sudo dnf install -y argyllcms
+        elif command -v pacman &> /dev/null; then
+            sudo pacman -S --noconfirm argyllcms
+        else
+            echo "Error: Unsupported Linux distribution. Please install 'argyll' manually."
+            exit 1
+        fi
+        ;;
+    CYGWIN*|MINGW32*|MSYS*|MINGW*)
+        echo "Windows detected. Please download and install ArgyllCMS from:"
+        echo "https://www.argyllcms.com/downloadwin.html"
+        echo "Ensure 'bin' folder is in your PATH."
+        exit 0
+        ;;
+    *)
+        echo "Error: Unsupported OS type: ${OS_TYPE}"
+        exit 1
+        ;;
+esac
 
-# Rotate log if needed before starting
-rotate_log_if_needed
-
-echo "Starting ArgyllCMS and Spyder5 setup for macOS..."
-
-# Check if Homebrew is installed
-if ! command -v brew &> /dev/null; then
-    echo "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-fi
-
-# Install ArgyllCMS
-echo "Installing ArgyllCMS..."
-HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_ENV_HINTS=1 brew install argyll-cms
-
-# Check if ArgyllCMS is available
-if ! command -v dispcal &> /dev/null; then
-    echo "ArgyllCMS installation failed."
+if command -v dispcal &> /dev/null; then
+    echo "✓ ArgyllCMS ready"
+else
+    echo "✗ Failed to verify ArgyllCMS installation."
     exit 1
 fi
 
-echo "ArgyllCMS installed successfully!"
-
-# Check for Spyder5 device
-echo "Checking for Spyder5 device..."
-if system_profiler SPUSBDataType | grep -i "spyder"; then
-    echo "✓ Spyder5 device detected!"
-else
-    echo "⚠ Warning: Spyder5 device not detected. Please ensure it is connected."
-fi
-
-echo "Setup complete! You can now run automated calibration."
-echo ""
-echo "To run automated calibration, use one of these commands:"
-echo "  ./run_calibration.sh          # Simple interactive setup"
-echo "  python3 auto_calibrate.py     # Standard calibration"
-echo "  python3 auto_calibrate.py --red -5   # With red reduction"
-echo "  python3 calibration_gui.py    # Launch the GUI"
-echo ""
+echo "✓ Setup complete"
