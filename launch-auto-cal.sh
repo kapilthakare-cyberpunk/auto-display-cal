@@ -36,6 +36,18 @@ if python3 -c "from calibration_utils import check_spyder5_connected; exit(0 if 
     echo "✓ Device detected"
 else
     echo "⚠ No device detected"
+    if [[ "$(uname -s)" == "Linux" ]]; then
+        echo ""
+        echo "💡 LINUX TIP: If your sensor is plugged in but not seen, try fixing permissions:"
+        echo "   sudo cp /usr/share/argyllcms/udev/55-Argyll.rules /etc/udev/rules.d/"
+        echo "   sudo udevadm control --reload-rules"
+        echo ""
+    elif [[ "$(uname -s)" == "Darwin" ]]; then
+        echo ""
+        echo "💡 macOS TIP: Ensure no other calibration software (DisplayCAL, Spyder Utility) is running."
+        echo "   Check 'System Settings > Privacy & Security > Accessories' to allow the sensor."
+        echo ""
+    fi
     if [ $DRY_RUN -eq 0 ]; then
         echo "Connect your device and press Enter to continue..."
         read

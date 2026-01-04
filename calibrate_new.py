@@ -221,7 +221,20 @@ def main():
     
     # 1. Check Device
     if not check_spyder5_connected():
-        print("Error: Spyder5 not found. Please connect it.")
+        print("Error: Colorimeter not found. Please connect it.")
+        if os.name == 'nt':
+            print("\n💡 WINDOWS TIP: You likely need the ArgyllCMS driver.")
+            print("   Use 'Zadig' to install the WinUSB driver for your sensor.")
+            print("   Or use the 'usb_installer.exe' included in the ArgyllCMS bin folder.\n")
+        elif hasattr(os, 'uname'):
+            sysname = os.uname().sysname
+            if sysname == 'Linux':
+                print("\n💡 LINUX TIP: If your sensor is connected but not seen, try fixing permissions:")
+                print("   sudo cp /usr/share/argyllcms/udev/55-Argyll.rules /etc/udev/rules.d/")
+                print("   sudo udevadm control --reload-rules\n")
+            elif sysname == 'Darwin':
+                print("\n💡 macOS TIP: Ensure no other calibration tools (DisplayCAL, Spyder Utility) are running.")
+                print("   Some system-level 'Accessory' permissions might need to be allowed in System Settings.\n")
         sys.exit(1)
 
     # 2. Detect Light & Auto-Configure

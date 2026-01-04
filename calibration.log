@@ -149,3 +149,7 @@ Error occurred at line 105. Check calibration.log for details.
 2026-01-04 05:44:24,419 - INFO - Spyder5 device detected (via ioreg)
 2026-01-04 05:44:24,581 - INFO - Spyder5 device detected (via ioreg)
 2026-01-04 05:44:27,586 - INFO - Falling back to time-based ambient estimation.
+2026-01-04 05:50:38,192 - INFO - Colorimeter detected via ArgyllCMS
+2026-01-04 05:50:52,532 - INFO - Colorimeter detected via ArgyllCMS
+2026-01-04 05:51:08,876 - INFO - Colorimeter detected via ArgyllCMS
+2026-01-04 05:51:11,885 - INFO - Falling back to time-based ambient estimation.

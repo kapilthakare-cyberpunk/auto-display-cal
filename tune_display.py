@@ -1,29 +1,23 @@
 #!/usr/bin/env python3
 # tune_display.py - Real-time Display Color Tuner
-# Allows live adjustment of R/G/B/Brightness/Gamma using ArgyllCMS dispwin
-#
-# USAGE:
-#   python3 tune_display.py
-#
-# CONTROLS:
-#   r/R : Red -/+ (Tint)
-#   g/G : Green -/+ (Tint)
-#   b/B : Blue -/+ (Tint)
-#   w/W : Brightness -/+ (Global Gain)
-#   q   : Quit (Keep changes)
-#   x   : Cancel (Revert to start)
+# Allows live adjustment of R/G/B/Brightness using ArgyllCMS dispwin
 
 import sys
 import os
 import subprocess
-import termios
-import tty
 import time
+import tempfile
 from datetime import datetime
+from calibration_utils import find_binary, setup_logging
+
+logger = setup_logging("live_tuner")
 
 # --- Configuration ---
 STEP_SIZE = 0.01  # 1% increment
-TEMP_CAL_FILE = "/tmp/live_tune.cal"
+TEMP_CAL_NAME = "live_tune.cal"
+
+def get_temp_cal_path():
+    return os.path.join(tempfile.gettempdir(), TEMP_CAL_NAME)
 
 # Current State (1.0 = 100% = Neutral)
 state = {
@@ -34,22 +28,24 @@ state = {
 }
 
 def getch():
-    """Read single character from stdin without waiting for enter."""
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
-    try:
-        tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
+    """Read single character from stdin without waiting for enter (Cross-platform)."""
+    if os.name == 'nt':
+        import msvcrt
+        return msvcrt.getch().decode('utf-8', errors='ignore')
+    else:
+        import termios
+        import tty
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
 
 def generate_cal_file(filename, s):
-    """
-    Generates a simple ArgyllCMS .cal file (RAMP) based on current state.
-    This modifies the Video Card Gamma Table (VCGT).
-    """
-    # Header for Argyll .cal file
+    """Generates a simple ArgyllCMS .cal file based on current state."""
     content = [
         "CAL",
         "DESCRIPTOR \"Real-time Tuning\"",
@@ -60,25 +56,15 @@ def generate_cal_file(filename, s):
         "BEGIN_DATA_FORMAT",
         "RGB_I RGB_R RGB_G RGB_B",
         "END_DATA_FORMAT",
-        "NUMBER_OF_SETS 256",
+        f"NUMBER_OF_SETS 256",
         "BEGIN_DATA"
     ]
 
-    # Generate 256 steps (0-1.0 mapping)
     for i in range(256):
         x = i / 255.0
-        
-        # Apply Gain * Channel Tint
-        # Simple linear scaling (Gamma 1.0 relative modification)
-        # We could apply gamma power here, but linear gain is safer for "tinting"
-        # on top of an existing HW calibration if the display handles it.
-        # BUT: dispwin loads this INTO the LUT, replacing the current LUT.
-        # So this is a "Visual Override".
-        
-        r_val = min(1.0, x * s['gain'] * s['red'])
-        g_val = min(1.0, x * s['gain'] * s['green'])
-        b_val = min(1.0, x * s['gain'] * s['blue'])
-        
+        r_val = min(1.0, max(0.0, x * s['gain'] * s['red']))
+        g_val = min(1.0, max(0.0, x * s['gain'] * s['green']))
+        b_val = min(1.0, max(0.0, x * s['gain'] * s['blue']))
         content.append(f"{x:.6f} {r_val:.6f} {g_val:.6f} {b_val:.6f}")
 
     content.append("END_DATA")
@@ -86,89 +72,86 @@ def generate_cal_file(filename, s):
     with open(filename, 'w') as f:
         f.write('\n'.join(content))
 
-def apply_tuning():
+def apply_tuning(dispwin_bin):
     """Applies the current state to the display instantly."""
-    generate_cal_file(TEMP_CAL_FILE, state)
+    path = get_temp_cal_path()
+    generate_cal_file(path, state)
     
-    # Run dispwin to load the .cal file
-    # -d1: First display
-    cmd = ["dispwin", "-d1", TEMP_CAL_FILE]
-    subprocess.run(cmd, capture_output=True)
+    if dispwin_bin:
+        # -d1: First display
+        subprocess.run([dispwin_bin, "-d1", path], capture_output=True)
 
 def print_status():
-    print(f"\r\033[KSTATUS | Red: {state['red']:.2f} | Green: {state['green']:.2f} | Blue: {state['blue']:.2f} | Brightness: {state['gain']:.2f}", end="", flush=True)
+    print(f"\r\033[KSTATUS | Red: {state['red']:.2f} | Green: {state['green']:.2f} | Blue: {state['blue']:.2f} | Gain: {state['gain']:.2f} (S to Export)", end="", flush=True)
 
 def main():
-    print("--- REAL-TIME DISPLAY TUNER ---")
-    print("WARNING: This replaces your current active calibration LUT while running.")
-    print("Controls:")
+    dispwin_bin = find_binary("dispwin")
+    if not dispwin_bin:
+        print("Error: 'dispwin' from ArgyllCMS not found. Please run setup.sh first.")
+        sys.exit(1)
+
+    print("\n╔════════════════════════════════════════╗")
+    print("║       REAL-TIME DISPLAY TUNER          ║")
+    print("╚════════════════════════════════════════╝")
+    print("Adjust your monitor's look with shortcuts:")
     print("  r/R : Red -/+")
     print("  g/G : Green -/+")
     print("  b/B : Blue -/+")
-    print("  w/W : Brightness -/+")
+    print("  w/W : Brightness Gain -/+")
+    print("  s   : EXPORT & SAVE settings")
     print("  q   : Quit and Keep")
     print("  x   : Cancel and Revert")
-    print("-------------------------------")
+    print("------------------------------------------")
 
-    # Initial apply
-    apply_tuning()
+    apply_tuning(dispwin_bin)
     print_status()
 
     while True:
         char = getch()
         
         if char == 'q':
-            print("\nValues kept. To make permanent, you might need to save the Generated .cal file.")
-            print(f"File cached at: {TEMP_CAL_FILE}")
+            print(f"\n\n[INFO] Tuning session ended. Changes kept.")
             break
         elif char == 'x':
-            print("\nReverting...")
-            subprocess.run(["dispwin", "-d1", "-c"]) # Clear/Reset
+            print("\n\n[REVERTING] Defaulting video LUT...")
+            subprocess.run([dispwin_bin, "-d1", "-c"], capture_output=True)
             break
-        
-        elif char == 's' or char == 'S':
-            # Save/Export
+        elif char.lower() == 's':
             print("\n")
-            name = input("Enter name for exported profile (e.g., 'MyVisualTune'): ").strip()
+            name = input("Enter name for exported visual profile: ").strip()
             if not name:
-                name = f"VisualTune_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                name = f"LiveTune_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-            # Prepare Export Paths
-            documents_path = os.path.expanduser("~/Documents/Calibration_Reports")
-            if not os.path.exists(documents_path):
-                os.makedirs(documents_path)
+            docs_path = os.path.expanduser("~/Documents/Calibration_Reports")
+            if not os.path.exists(docs_path):
+                os.makedirs(docs_path)
             
-            cal_filename = f"{name}.cal"
-            report_filename = f"Report_{name}.txt"
+            cal_file = os.path.join(docs_path, f"{name}.cal")
+            report_file = os.path.join(docs_path, f"Report_{name}.txt")
             
-            export_cal = os.path.join(documents_path, cal_filename)
-            export_report = os.path.join(documents_path, report_filename)
+            generate_cal_file(cal_file, state)
             
-            # 1. Save .cal file
-            generate_cal_file(export_cal, state)
-            
-            # 2. Generate Report
-            with open(export_report, 'w') as f:
-                f.write("Display Visual Tuning Report\n")
+            with open(report_file, 'w') as f:
+                f.write(f"Display Visual Tuning Report\n")
                 f.write(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("-" * 30 + "\n")
-                f.write(f"Red Tint Adjustment:   {int((state['red']-1.0)*100):+d}%\n")
-                f.write(f"Green Tint Adjustment: {int((state['green']-1.0)*100):+d}%\n")
-                f.write(f"Blue Tint Adjustment:  {int((state['blue']-1.0)*100):+d}%\n")
-                f.write(f"Brightness (Gain):     {int((state['gain']-1.0)*100):+d}%\n")
-                f.write("-" * 30 + "\n")
-                f.write("To apply this tuning in the future, run:\n")
-                f.write(f"dispwin -d1 {export_cal}\n")
-            
-            print(f"\n[SUCCESS] Settings exported!")
-            print(f"  - Calibration File: {export_cal}")
-            print(f"  - Detailed Report:  {export_report}")
-            
-            # Ask if we should keep it applied
-            # We just break, effectively keeping it
+                f.write("-" * 40 + "\n")
+                f.write(f"Red:   {state['red']:.2f}\n")
+                f.write(f"Green: {state['green']:.2f}\n")
+                f.write(f"Blue:  {state['blue']:.2f}\n")
+                f.write(f"Gain:  {state['gain']:.2f}\n")
+                f.write("-" * 40 + "\n")
+                f.write(f"To reload this in the future: dispwin -d1 {cal_file}\n")
+
+            print(f"\n" + "═"*50)
+            print(f" ✅ SUCCESS: SETTINGS EXPORTED")
+            print(f"" + "═"*50)
+            print(f" 📂 LOCATION  : {docs_path}")
+            print(f" 📄 CAL FILE   : {name}.cal")
+            print(f" 📝 REPORT     : Report_{name}.txt")
+            print(f"═"*50 + "\n")
             break
 
-        # Logic
+        # Adjustments
         if char == 'r': state['red'] -= STEP_SIZE
         elif char == 'R': state['red'] += STEP_SIZE
         elif char == 'g': state['green'] -= STEP_SIZE
@@ -178,8 +161,7 @@ def main():
         elif char == 'w': state['gain'] -= STEP_SIZE
         elif char == 'W': state['gain'] += STEP_SIZE
         
-        # Apply & Update UI
-        apply_tuning()
+        apply_tuning(dispwin_bin)
         print_status()
 
 if __name__ == "__main__":
